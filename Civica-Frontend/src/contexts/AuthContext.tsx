@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthContextType } from '../types';
+import authService from '../services/authService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -12,33 +13,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage)
-    const savedUser = localStorage.getItem('civica_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    // Check if user is already logged in using authService
+    if (authService.isAuthenticated()) {
+      const userData = authService.getUserData();
+      if (userData) {
+        setUser(userData);
+      } else {
+        // If we have a token but no user data, create a minimal user object
+        setUser({
+          id: 'unknown',
+          username: 'User',
+          email: 'user@example.com',
+          role: 'user',
+          points: 0,
+          currentLevel: 1,
+          createdAt: new Date().toISOString()
+        });
+      }
     }
     setIsLoading(false);
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate API call - replace with actual authentication
     try {
-      // For demo purposes, accept admin/admin as credentials
-      if (username === 'admin' && password === 'admin') {
-        const adminUser: User = {
-          id: '1',
-          username: 'admin',
-          email: 'admin@civica.com',
-          role: 'admin',
-          points: 0,
-          currentLevel: 1,
-          createdAt: new Date().toISOString()
-        };
-        
-        setUser(adminUser);
-        localStorage.setItem('civica_user', JSON.stringify(adminUser));
+      const result = await authService.login({ email, password });
+      console.log(result);
+      if (result.success) {
+        const userData = authService.getUserData();
+        if (userData) {
+          setUser(userData);
+        } else {
+          // If we have a token but no user data, create a minimal user object
+          setUser({
+            id: 'unknown',
+            username: 'User',
+            email: email, // Use the email from login
+            role: 'user',
+            points: 0,
+            currentLevel: 1,
+            createdAt: new Date().toISOString()
+          });
+        }
         setIsLoading(false);
         return true;
       }
@@ -51,9 +68,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = (): void => {
+    authService.logout();
     setUser(null);
-    localStorage.removeItem('civica_user');
   };
 
   const value: AuthContextType = {

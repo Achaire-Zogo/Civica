@@ -13,6 +13,14 @@ class Url {
   static const String updateUser = "$baseUrl/api/user/";
   static const String deleteUser = "$baseUrl/api/user/";
   
+  // Theme endpoints
+  static const String themes = "$baseUrl/api/theme/";
+  static const String getThemeById = "$baseUrl/api/theme/";
+  static const String getThemeLevels = "$baseUrl/api/theme/";
+  static const String getLevelById = "$baseUrl/api/theme/level/";
+  static const String checkAnswer = "$baseUrl/api/theme/question/";
+  static const String seedData = "$baseUrl/api/theme/seed-data";
+  
   // Quiz endpoints (to be added later if needed)
   static const String quizzes = "$baseUrl/api/quiz/";
   

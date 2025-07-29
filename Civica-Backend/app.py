@@ -16,6 +16,9 @@ from models import *  # Importe tous les modèles
 from database import SessionLocal, Base, engine, create_tables, init_database, seed_database
 from routes.user_route import router as user_router
 from routes.kyc_route import router as kyc_router
+from routes.theme_route import router as theme_router
+from routes.level_route import router as level_router
+from routes.question_route import router as question_router
 # Configurer le logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -59,6 +62,10 @@ async def startup_event():
 
 # Inclure les routers
 app.include_router(user_router)
+app.include_router(kyc_router)
+app.include_router(theme_router)
+app.include_router(level_router)
+app.include_router(question_router)
 
 # Point d'entrée principal
 if __name__ == '__main__':
