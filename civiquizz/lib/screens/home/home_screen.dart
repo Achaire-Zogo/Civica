@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../game/themes_screen.dart';
+import '../game/rang.dart';
 import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -28,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _initializeGame() async {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     await gameProvider.initializeGameData();
     if (authProvider.user != null) {
       await gameProvider.loadUserProgress(authProvider.user!.uid);
@@ -43,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: const [
           _HomeTab(),
           ThemesScreen(),
+          RangScreen(),
           ProfileScreen(),
         ],
       ),
@@ -72,6 +74,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.quiz),
             label: 'Jouer',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.emoji_events),
+            label: 'Rang',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -263,7 +269,7 @@ class _HomeTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               CustomButton(
                 text: 'Commencer à Jouer',
                 icon: Icons.play_arrow,
@@ -276,7 +282,7 @@ class _HomeTab extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 12),
-              
+
               CustomButton(
                 text: 'Voir mon Profil',
                 icon: Icons.person,
@@ -300,7 +306,7 @@ class _HomeTab extends StatelessWidget {
                   if (user?.badges.isEmpty ?? true) {
                     return const SizedBox.shrink();
                   }
-                  
+
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -331,7 +337,8 @@ class _HomeTab extends StatelessWidget {
                                 ),
                               ),
                               backgroundColor: Colors.white,
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
                             );
                           }).toList(),
                         ),

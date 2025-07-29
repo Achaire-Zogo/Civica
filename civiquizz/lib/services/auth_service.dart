@@ -1,144 +1,214 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/user_model.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/url.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static const String _tokenKey = 'auth_token';
+  static const String _userDataKey = 'user_data';
 
-  // Stream pour écouter les changements d'authentification
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  // Get stored token
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_tokenKey);
+  }
 
-  // Utilisateur actuel
-  User? get currentUser => _auth.currentUser;
+  // Store token
+  Future<void> _storeToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, token);
+  }
 
-  // Inscription avec email et mot de passe
-  Future<UserModel?> signUpWithEmailAndPassword({
+  // Store user data
+  Future<void> _storeUserData(Map<String, dynamic> userData) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userDataKey, jsonEncode(userData));
+  }
+
+  // Get stored user data
+  Future<Map<String, dynamic>?> getUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userDataString = prefs.getString(_userDataKey);
+    if (userDataString != null) {
+      return jsonDecode(userDataString);
+    }
+    return null;
+  }
+
+  // Check if user is logged in
+  Future<bool> isLoggedIn() async {
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  // Register with email, password and pseudo
+  Future<Map<String, dynamic>> register({
     required String email,
     required String password,
     required String pseudo,
   }) async {
     try {
-      UserCredential result = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
+      final response = await http.post(
+        Uri.parse(Url.register),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'spseudo': pseudo,
+        }),
       );
 
-      User? user = result.user;
-      if (user != null) {
-        // Créer le profil utilisateur dans Firestore
-        UserModel userModel = UserModel(
-          uid: user.uid,
-          email: email,
-          pseudo: pseudo,
-          score: 0,
-          niveau: 1,
-          badges: ['Débutant'],
-          vies: 3,
-          lastLifeRefresh: DateTime.now(),
-        );
+      final responseData = jsonDecode(response.body);
 
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .set(userModel.toJson());
-
-        return userModel;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'message': responseData['message'] ?? 'Registration successful',
+          'data': responseData['data'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['message'] ?? 'Registration failed',
+          'error': responseData['error'] ?? 'Unknown error',
+        };
       }
     } catch (e) {
-      print('Erreur lors de l\'inscription: $e');
-      rethrow;
+      return {
+        'success': false,
+        'message': 'Network error occurred',
+        'error': e.toString(),
+      };
     }
-    return null;
   }
 
-  // Connexion avec email et mot de passe
-  Future<UserModel?> signInWithEmailAndPassword({
+  // Login with email and password
+  Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
     try {
-      UserCredential result = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
+      final response = await http.post(
+        Uri.parse(Url.login),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
       );
 
-      User? user = result.user;
-      if (user != null) {
-        return await getUserData(user.uid);
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        final token = responseData['data']['token'];
+        
+        // Store token in SharedPreferences
+        await _storeToken(token);
+        
+        // Store user data if available
+        if (responseData['data'] != null) {
+          await _storeUserData(responseData['data']);
+        }
+
+        return {
+          'success': true,
+          'message': responseData['message'] ?? 'Login successful',
+          'token': token,
+          'data': responseData['data'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': responseData['message'] ?? 'Login failed',
+          'error': responseData['data'] ?? 'Invalid credentials',
+        };
       }
     } catch (e) {
-      print('Erreur lors de la connexion: $e');
-      rethrow;
+      return {
+        'success': false,
+        'message': 'Network error occurred',
+        'error': e.toString(),
+      };
     }
-    return null;
   }
 
-  // Récupérer les données utilisateur depuis Firestore
-  Future<UserModel?> getUserData(String uid) async {
+  // Logout
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tokenKey);
+    await prefs.remove(_userDataKey);
+  }
+
+  // Get authorization headers for API calls
+  Future<Map<String, String>> getAuthHeaders() async {
+    final token = await getToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  // Check if email exists
+  Future<Map<String, dynamic>> checkEmail(String email) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
-      if (doc.exists) {
-        return UserModel.fromJson(doc.data() as Map<String, dynamic>);
-      }
+      final response = await http.get(
+        Uri.parse('${Url.checkEmail}?email=$email'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      return {
+        'success': response.statusCode == 200,
+        'message': responseData['message'] ?? '',
+        'exists': response.statusCode == 200,
+      };
     } catch (e) {
-      print('Erreur lors de la récupération des données utilisateur: $e');
+      return {
+        'success': false,
+        'message': 'Network error occurred',
+        'error': e.toString(),
+      };
     }
-    return null;
   }
 
-  // Mettre à jour les données utilisateur
-  Future<void> updateUserData(UserModel user) async {
+  // Change password
+  Future<Map<String, dynamic>> changePassword({
+    required String email,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
     try {
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .update(user.toJson());
-    } catch (e) {
-      print('Erreur lors de la mise à jour des données utilisateur: $e');
-      rethrow;
-    }
-  }
+      final headers = await getAuthHeaders();
+      final response = await http.post(
+        Uri.parse(Url.changePassword),
+        headers: headers,
+        body: jsonEncode({
+          'email': email,
+          'old_password': oldPassword,
+          'new_password': newPassword,
+        }),
+      );
 
-  // Réinitialisation du mot de passe
-  Future<void> resetPassword(String email) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-    } catch (e) {
-      print('Erreur lors de la réinitialisation du mot de passe: $e');
-      rethrow;
-    }
-  }
+      final responseData = jsonDecode(response.body);
 
-  // Déconnexion
-  Future<void> signOut() async {
-    try {
-      await _auth.signOut();
+      return {
+        'success': response.statusCode == 200,
+        'message': responseData['message'] ?? '',
+        'data': responseData['data'],
+      };
     } catch (e) {
-      print('Erreur lors de la déconnexion: $e');
-      rethrow;
+      return {
+        'success': false,
+        'message': 'Network error occurred',
+        'error': e.toString(),
+      };
     }
-  }
-
-  // Vérifier et recharger les vies
-  Future<UserModel?> checkAndRefreshLives(UserModel user) async {
-    DateTime now = DateTime.now();
-    DateTime? lastRefresh = user.lastLifeRefresh;
-    
-    if (lastRefresh != null) {
-      int hoursSinceLastRefresh = now.difference(lastRefresh).inHours;
-      int newLives = (user.vies + (hoursSinceLastRefresh ~/ 2)).clamp(0, 3);
-      
-      if (newLives != user.vies) {
-        UserModel updatedUser = user.copyWith(
-          vies: newLives,
-          lastLifeRefresh: now,
-        );
-        await updateUserData(updatedUser);
-        return updatedUser;
-      }
-    }
-    
-    return user;
   }
 }

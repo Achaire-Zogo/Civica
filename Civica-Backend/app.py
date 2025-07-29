@@ -59,7 +59,6 @@ async def startup_event():
 
 # Inclure les routers
 app.include_router(user_router)
-app.include_router(kyc_router)
 
 # Point d'entrée principal
 if __name__ == '__main__':

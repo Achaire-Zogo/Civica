@@ -30,6 +30,7 @@ dependencies:
   shared_preferences: ^2.2.2
   connectivity_plus: ^5.0.2
   flutter_launcher_icons: ^0.13.1
+  http: ^1.1.0
   
   # Game Logic
   audioplayers: ^5.2.1

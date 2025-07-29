@@ -76,7 +76,8 @@ class _ThemesScreenState extends State<ThemesScreen> {
                     if (gameProvider.isLoading) {
                       return const Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       );
                     }
@@ -197,7 +198,8 @@ class _ThemeCard extends StatelessWidget {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: Color(int.parse(theme.couleur.replaceFirst('#', '0xFF'))),
+                        color: Color(
+                            int.parse(theme.couleur.replaceFirst('#', '0xFF'))),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
@@ -264,7 +266,8 @@ class _ThemeCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Color(int.parse(theme.couleur.replaceFirst('#', '0xFF')))
+                          color: Color(int.parse(
+                                  theme.couleur.replaceFirst('#', '0xFF')))
                               .withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -272,7 +275,8 @@ class _ThemeCard extends StatelessWidget {
                           sousTheme,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Color(int.parse(theme.couleur.replaceFirst('#', '0xFF'))),
+                            color: Color(int.parse(
+                                theme.couleur.replaceFirst('#', '0xFF'))),
                             fontWeight: FontWeight.w500,
                           ),
                         ),

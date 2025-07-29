@@ -54,6 +54,26 @@ class _QuizScreenState extends State<QuizScreen>
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
+    // Check and refresh lives first
+    await authProvider.checkAndRefreshLives();
+    
+    // Check if user has lives
+    if (authProvider.user?.vies == 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Vous n\'avez plus de vies ! Attendez pour en récupérer.',
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: const Color(0xFFE74C3C),
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+      return;
+    }
+    
     bool success = await gameProvider.startLevel(widget.level);
     if (!success) {
       if (mounted) {
@@ -72,7 +92,7 @@ class _QuizScreenState extends State<QuizScreen>
     }
 
     // Utiliser une vie
-    authProvider.useLife();
+    await authProvider.useLife();
     _progressController.forward();
     _questionController.forward();
   }
@@ -125,7 +145,9 @@ class _QuizScreenState extends State<QuizScreen>
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
-    final result = await gameProvider.finishLevel(authProvider.user!.uid);
+    // Use the user's uid from the auth provider
+    final userId = authProvider.user?.uid ?? '';
+    final result = await gameProvider.finishLevel(userId);
     
     if (mounted) {
       Navigator.of(context).pushReplacement(
