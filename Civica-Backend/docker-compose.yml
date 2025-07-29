@@ -1,0 +1,22 @@
+services:
+  service-user:
+    restart: always
+    build: .
+    ports:
+      - 5002:5002
+    env_file:
+      - .env.docker
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - easy_life_pay_network
+
+
+networks:
+  easy_life_pay_network:
+    name: easy_life_pay_network 
+    driver: bridge
+    attachable: true
+
