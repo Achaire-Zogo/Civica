@@ -17,11 +17,13 @@ export interface Level {
 }
 
 export interface Theme {
-  id: string;
-  name: string;
+  id: number;
+  title: string;
   description: string;
   color: string;
   isActive: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Question {

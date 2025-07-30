@@ -489,6 +489,7 @@ class _QuizScreenState extends State<QuizScreen> {
           level: widget.level,
           quizResults: quizProvider.getQuizResults(),
           questionResults: quizProvider.getQuestionResults(),
+          questions: widget.questions,
         ),
       ),
     );
