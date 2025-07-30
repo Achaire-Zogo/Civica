@@ -10,7 +10,7 @@ import 'quiz_screen.dart';
 class LevelsScreen extends StatefulWidget {
   final ThemeModel theme;
 
-  const LevelsScreen({Key? key, required this.theme}) : super(key: key);
+  const LevelsScreen({super.key, required this.theme});
 
   @override
   State<LevelsScreen> createState() => _LevelsScreenState();

@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
               <ListItemIcon><Person /></ListItemIcon>
               <ListItemText 
                 primary="Profil" 
-                secondary={user?.username || 'Admin'}
+                secondary={user?.spseudo || 'Admin'}
               />
             </ListItemButton>
           </ListItem>

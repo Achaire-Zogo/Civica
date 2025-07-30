@@ -8,7 +8,7 @@ import 'register_screen.dart';
 import '../home/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       bool success = await authProvider.signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 60),
-              
+
               // Logo et titre
               Column(
                 children: [
@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'CiviQuizz',
+                    'Civica',
                     style: GoogleFonts.poppins(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -105,9 +105,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 60),
-              
+
               // Formulaire de connexion
               Form(
                 key: _formKey,
@@ -123,15 +123,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Veuillez entrer votre email';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
                           return 'Veuillez entrer un email valide';
                         }
                         return null;
                       },
                     ),
-                    
                     const SizedBox(height: 20),
-                    
                     CustomTextField(
                       controller: _passwordController,
                       labelText: 'Mot de passe',
@@ -140,7 +139,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       prefixIcon: Icons.lock_outline,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: Colors.white.withOpacity(0.7),
                         ),
                         onPressed: () {
@@ -159,14 +160,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    
                     const SizedBox(height: 32),
-                    
                     Consumer<AuthProvider>(
                       builder: (context, authProvider, child) {
                         return CustomButton(
                           text: 'Se connecter',
-                          onPressed: authProvider.isLoading ? null : _handleLogin,
+                          onPressed:
+                              authProvider.isLoading ? null : _handleLogin,
                           isLoading: authProvider.isLoading,
                         );
                       },
@@ -174,9 +174,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Lien vers l'inscription
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -208,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 40),
             ],
           ),

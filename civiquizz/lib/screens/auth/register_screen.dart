@@ -7,7 +7,7 @@ import '../../widgets/custom_text_field.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -34,7 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       bool success = await authProvider.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
@@ -45,7 +45,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Show success message and navigate to login
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Inscription réussie ! Vous pouvez maintenant vous connecter.'),
+            content: Text(
+                'Inscription réussie ! Vous pouvez maintenant vous connecter.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -55,7 +56,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authProvider.errorMessage ?? 'Erreur lors de l\'inscription'),
+            content: Text(
+                authProvider.errorMessage ?? 'Erreur lors de l\'inscription'),
             backgroundColor: Colors.red,
           ),
         );
@@ -74,7 +76,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 40),
-              
+
               // Logo et titre
               Column(
                 children: [
@@ -109,7 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Rejoignez CiviQuizz dès maintenant',
+                    'Rejoignez Civica dès maintenant',
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       color: Colors.white.withOpacity(0.8),
@@ -117,9 +119,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // Formulaire d'inscription
               Form(
                 key: _formKey,
@@ -140,9 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-                    
                     const SizedBox(height: 20),
-                    
                     CustomTextField(
                       controller: _emailController,
                       labelText: 'Email',
@@ -153,15 +153,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Veuillez entrer votre email';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
                           return 'Veuillez entrer un email valide';
                         }
                         return null;
                       },
                     ),
-                    
                     const SizedBox(height: 20),
-                    
                     CustomTextField(
                       controller: _passwordController,
                       labelText: 'Mot de passe',
@@ -170,7 +169,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       prefixIcon: Icons.lock_outline,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: Colors.white.withOpacity(0.7),
                         ),
                         onPressed: () {
@@ -189,9 +190,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-                    
                     const SizedBox(height: 20),
-                    
                     CustomTextField(
                       controller: _confirmPasswordController,
                       labelText: 'Confirmer le mot de passe',
@@ -200,7 +199,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       prefixIcon: Icons.lock_outline,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: Colors.white.withOpacity(0.7),
                         ),
                         onPressed: () {
@@ -219,14 +220,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         return null;
                       },
                     ),
-                    
                     const SizedBox(height: 32),
-                    
                     Consumer<AuthProvider>(
                       builder: (context, authProvider, child) {
                         return CustomButton(
                           text: 'S\'inscrire',
-                          onPressed: authProvider.isLoading ? null : _handleRegister,
+                          onPressed:
+                              authProvider.isLoading ? null : _handleRegister,
                           isLoading: authProvider.isLoading,
                         );
                       },
@@ -234,9 +234,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Lien vers la connexion
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -268,7 +268,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 40),
             ],
           ),

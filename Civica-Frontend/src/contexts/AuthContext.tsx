@@ -22,12 +22,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // If we have a token but no user data, create a minimal user object
         setUser({
           id: 'unknown',
-          username: 'User',
+          spseudo: 'User',
           email: 'user@example.com',
-          role: 'user',
-          points: 0,
-          currentLevel: 1,
-          createdAt: new Date().toISOString()
+          role: 'USER',
+          is_verified: 'YES',
+          status: 'ACTIVE',
+          connexion_type: 'EMAIL',
+          point: 0,
+          niveaux: 1,
+          vies: 3,
+          is_deleted: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         });
       }
     }
@@ -48,12 +54,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // If we have a token but no user data, create a minimal user object
           setUser({
             id: 'unknown',
-            username: 'User',
+            spseudo: 'User',
             email: email, // Use the email from login
-            role: 'user',
-            points: 0,
-            currentLevel: 1,
-            createdAt: new Date().toISOString()
+            role: 'USER',
+            is_verified: 'YES',
+            status: 'ACTIVE',
+            connexion_type: 'EMAIL',
+            point: 0,
+            niveaux: 1,
+            vies: 3,
+            is_deleted: false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
         }
         setIsLoading(false);

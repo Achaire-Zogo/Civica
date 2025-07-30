@@ -15,12 +15,12 @@ class QuizResultScreen extends StatefulWidget {
   final List<QuestionModel> questions;
 
   const QuizResultScreen({
-    Key? key,
+    super.key,
     required this.level,
     required this.quizResults,
     required this.questionResults,
     required this.questions,
-  }) : super(key: key);
+  });
 
   @override
   State<QuizResultScreen> createState() => _QuizResultScreenState();
@@ -415,12 +415,12 @@ class _ResultStat extends StatelessWidget {
   final Color color;
 
   const _ResultStat({
-    Key? key,
+    super.key,
     required this.icon,
     required this.label,
     required this.value,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

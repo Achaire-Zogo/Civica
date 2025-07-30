@@ -19,7 +19,7 @@ const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    username: user?.username || '',
+    spseudo: user?.spseudo || '',
     email: user?.email || '',
   });
 
@@ -31,7 +31,7 @@ const ProfilePage: React.FC = () => {
 
   const handleCancel = () => {
     setFormData({
-      username: user?.username || '',
+      spseudo: user?.spseudo || '',
       email: user?.email || '',
     });
     setIsEditing(false);
@@ -58,10 +58,10 @@ const ProfilePage: React.FC = () => {
                     fontSize: '3rem'
                   }}
                 >
-                  {user?.username?.charAt(0).toUpperCase() || 'A'}
+                  {user?.spseudo?.charAt(0).toUpperCase() || 'A'}
                 </Avatar>
                 <Typography variant="h5" gutterBottom>
-                  {user?.username || 'Admin'}
+                  {user?.spseudo || 'Admin'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
                   {user?.email || 'admin@civica.com'}
@@ -69,15 +69,15 @@ const ProfilePage: React.FC = () => {
                 <Typography 
                   variant="caption" 
                   sx={{ 
-                    bgcolor: user?.role === 'admin' ? 'primary.main' : 'grey.300',
-                    color: user?.role === 'admin' ? 'white' : 'black',
+                    bgcolor: user?.role === 'ADMIN' ? 'primary.main' : 'grey.300',
+                    color: user?.role === 'ADMIN' ? 'white' : 'black',
                     px: 2,
                     py: 0.5,
                     borderRadius: 1,
                     display: 'inline-block'
                   }}
                 >
-                  {user?.role === 'admin' ? 'Administrateur' : 'Utilisateur'}
+                  {user?.role === 'ADMIN' ? 'Administrateur' : 'Utilisateur'}
                 </Typography>
               </CardContent>
             </Card>
@@ -122,9 +122,9 @@ const ProfilePage: React.FC = () => {
                   <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
-                      label="Nom d'utilisateur"
-                      value={formData.username}
-                      onChange={(e) => setFormData({...formData, username: e.target.value})}
+                      label="Pseudo"
+                      value={formData.spseudo}
+                      onChange={(e) => setFormData({...formData, spseudo: e.target.value})}
                       disabled={!isEditing}
                       InputProps={{
                         startAdornment: <Person sx={{ mr: 1, color: 'text.secondary' }} />
@@ -155,7 +155,7 @@ const ProfilePage: React.FC = () => {
                     <Grid item xs={12} sm={4}>
                       <Paper sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h4" color="primary">
-                          {user?.points || 0}
+                          {user?.point || 0}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Points totaux
@@ -165,7 +165,7 @@ const ProfilePage: React.FC = () => {
                     <Grid item xs={12} sm={4}>
                       <Paper sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h4" color="success.main">
-                          {user?.currentLevel || 1}
+                          {user?.niveaux || 1}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Niveau actuel
@@ -175,7 +175,7 @@ const ProfilePage: React.FC = () => {
                     <Grid item xs={12} sm={4}>
                       <Paper sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h4" color="info.main">
-                          {user?.role === 'admin' ? '∞' : '0'}
+                          {user?.role === 'ADMIN' ? '∞' : '0'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Quiz complétés

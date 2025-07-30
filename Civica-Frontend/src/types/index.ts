@@ -1,11 +1,19 @@
 export interface User {
   id: string;
-  username: string;
+  spseudo?: string;
   email: string;
-  role: 'admin' | 'user';
-  points: number;
-  currentLevel: number;
-  createdAt: string;
+  role: 'USER' | 'ADMIN';
+  is_verified: 'YES' | 'NO';
+  status: 'ACTIVE' | 'INACTIVE';
+  connexion_type: 'EMAIL' | 'PHONE' | 'GOOGLE' | 'FACEBOOK';
+  point: number;
+  niveaux: number;
+  vies: number;
+  is_deleted: boolean;
+  fcm_token?: string;
+  last_life_refresh?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Level {

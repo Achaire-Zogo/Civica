@@ -13,10 +13,10 @@ class QuizScreen extends StatefulWidget {
   final List<QuestionModel> questions;
 
   const QuizScreen({
-    Key? key,
+    super.key,
     required this.level,
     required this.questions,
-  }) : super(key: key);
+  });
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();

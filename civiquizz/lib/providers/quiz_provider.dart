@@ -10,7 +10,7 @@ class QuizProvider with ChangeNotifier {
   // Quiz state
   List<QuestionModel> _questions = [];
   int _currentQuestionIndex = 0;
-  Map<int, String> _userAnswers = {};
+  final Map<int, String> _userAnswers = {};
   int _score = 0;
   int _correctAnswers = 0;
   bool _isQuizCompleted = false;
@@ -162,8 +162,9 @@ class QuizProvider with ChangeNotifier {
     final percentage = _questions.isEmpty ? 0.0 : (_correctAnswers / _questions.length) * 100;
     
     String grade = 'F';
-    if (percentage >= 90) grade = 'A+';
-    else if (percentage >= 80) grade = 'A';
+    if (percentage >= 90) {
+      grade = 'A+';
+    } else if (percentage >= 80) grade = 'A';
     else if (percentage >= 70) grade = 'B';
     else if (percentage >= 60) grade = 'C';
     else if (percentage >= 50) grade = 'D';

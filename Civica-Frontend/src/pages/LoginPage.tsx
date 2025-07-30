@@ -52,6 +52,8 @@ const LoginPage: React.FC = () => {
       if (result.success) {
         console.log(result);
         navigate('/dashboard', { replace: true });
+        window.location.reload();
+
       } else {
         setError(result.message);
       }
@@ -105,7 +107,7 @@ const LoginPage: React.FC = () => {
               lineHeight: 1.2
             }}
           >
-            Rejoignez +25 000 entreprises et propulser votre croissance
+            Rejoignez CIVICA
           </Typography>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
@@ -149,7 +151,7 @@ const LoginPage: React.FC = () => {
                   marginBottom: 1
                 }}
               >
-                CiviQuizz
+                CiviCA
               </Typography>
               <Typography
                 variant="h6"

@@ -56,7 +56,7 @@ def get_all_users(email: Optional[str] = None, db: Session = Depends(get_db)):
         status_code=200,
         content={
             "message": message,
-            "data": {"users": user_list}
+            "data": user_list
         }
     )
 
@@ -716,5 +716,54 @@ async def change_password(myuser: UserChangePassword, db: Session = Depends(get_
                 "message":"Internal server error",
                 "data":""
             }
+        )
+
+# Get dashboard statistics
+@router.get("/dashboard/stats")
+def get_dashboard_stats(db: Session = Depends(get_db)):
+    """Récupère les statistiques globales pour le tableau de bord admin"""
+    try:
+        from models.model_themes import ThemeEntity
+        from models.model_level import LevelEntity
+        from models.model_question import QuestionEntity
+        
+        # Compter les utilisateurs actifs
+        users_count = db.query(UserEntity).filter(
+            UserEntity.is_deleted == False,
+            UserEntity.status == 'ACTIVE'
+        ).count()
+        
+        # Compter les thèmes actifs
+        themes_count = db.query(ThemeEntity).filter(
+            ThemeEntity.is_active == True
+        ).count()
+        
+        # Compter les niveaux actifs
+        levels_count = db.query(LevelEntity).filter(
+            LevelEntity.is_active == True
+        ).count()
+        
+        # Compter les questions actives
+        questions_count = db.query(QuestionEntity).filter(
+            QuestionEntity.is_active == True
+        ).count()
+        
+        return StandardResponse(
+            statusCode=200,
+            message="Statistiques du tableau de bord récupérées avec succès",
+            data={
+                "users_count": users_count,
+                "themes_count": themes_count,
+                "levels_count": levels_count,
+                "questions_count": questions_count,
+                "last_updated": datetime.now().isoformat()
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération des stats du dashboard: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de la récupération des statistiques du tableau de bord"
         )
     

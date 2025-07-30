@@ -19,7 +19,7 @@ class Url {
   static const String getLifeStatus = "$baseUrl/api/user/life-status/";
 
   // Theme endpoints
-  static const String themes = "$baseUrl/api/theme/";
+  static const String themes = "$baseUrl/api/theme";
   static const String getThemeById = "$baseUrl/api/theme/";
   static const String getThemeLevels = "$baseUrl/api/theme/";
   static const String getLevelById = "$baseUrl/api/level/";

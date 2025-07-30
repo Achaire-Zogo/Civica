@@ -1,5 +1,5 @@
 // Import types from shared types file
-import type { Question } from '../types';
+import type { Question, User } from '../types';
 
 const API_BASE_URL = 'http://192.168.1.143:5002/api';
 
@@ -245,6 +245,84 @@ class ApiService {
   getCurrentUser(): any {
     const userData = localStorage.getItem('user_data');
     return userData ? JSON.parse(userData) : null;
+  }
+
+  // User CRUD operations
+  async getUsers(email?: string): Promise<User[]> {
+    const url = email ? `${API_BASE_URL}/user/?email=${encodeURIComponent(email)}` : `${API_BASE_URL}/user/`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    const data = await this.handleResponse<ApiResponse<User[]>>(response);
+    return data.data;
+  }
+
+  async getUser(userId: string): Promise<User> {
+    const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    const data = await this.handleResponse<ApiResponse<User>>(response);
+    return data.data;
+  }
+
+  async updateUser(userId: string, userData: Partial<Omit<User, 'id' | 'created_at' | 'updated_at'>>): Promise<User> {
+    const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(userData),
+    });
+    const data = await this.handleResponse<ApiResponse<User>>(response);
+    return data.data;
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    await this.handleResponse<ApiResponse<any>>(response);
+  }
+
+  async updateUserScore(userId: string, pointsEarned: number): Promise<User> {
+    const response = await fetch(`${API_BASE_URL}/user/${userId}/score`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ points_earned: pointsEarned }),
+    });
+    const data = await this.handleResponse<ApiResponse<User>>(response);
+    return data.data;
+  }
+
+  async getUserStats(userId: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/user/${userId}/stats`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    const data = await this.handleResponse<ApiResponse<any>>(response);
+    return data.data;
+  }
+
+  async getDashboardStats(): Promise<{
+    users_count: number;
+    themes_count: number;
+    levels_count: number;
+    questions_count: number;
+    last_updated: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/user/dashboard/stats`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    const data = await this.handleResponse<ApiResponse<{
+      users_count: number;
+      themes_count: number;
+      levels_count: number;
+      questions_count: number;
+      last_updated: string;
+    }>>(response);
+    return data.data;
   }
 }
 

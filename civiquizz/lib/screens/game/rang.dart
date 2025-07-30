@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class RangScreen extends StatefulWidget {
-  const RangScreen({Key? key}) : super(key: key);
+  const RangScreen({super.key});
 
   @override
   State<RangScreen> createState() => _RangScreenState();

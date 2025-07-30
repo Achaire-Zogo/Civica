@@ -6,7 +6,7 @@ import '../../models/theme_model.dart';
 import 'levels_screen.dart';
 
 class ThemesScreen extends StatefulWidget {
-  const ThemesScreen({Key? key}) : super(key: key);
+  const ThemesScreen({super.key});
 
   @override
   State<ThemesScreen> createState() => _ThemesScreenState();

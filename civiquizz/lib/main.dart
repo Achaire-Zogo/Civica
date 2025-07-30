@@ -22,7 +22,7 @@ void main() async {
 }
 
 class CiviquizzApp extends StatelessWidget {
-  const CiviquizzApp({Key? key}) : super(key: key);
+  const CiviquizzApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +81,7 @@ class CiviquizzApp extends StatelessWidget {
 }
 
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({Key? key}) : super(key: key);
+  const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
