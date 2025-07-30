@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from models import *  # Importe tous les modèles
 from database import SessionLocal, Base, engine, create_tables, init_database, seed_database
+from seeders import run_all_seeders
 from routes.user_route import router as user_router
 from routes.kyc_route import router as kyc_router
 from routes.theme_route import router as theme_router
@@ -56,6 +57,16 @@ async def startup_event():
         #creation de la base de donnee
         create_tables()
         seed_database()
+        
+        # Exécuter les seeders personnalisés
+        logger.info("Exécution des seeders...")
+        db = SessionLocal()
+        try:
+            run_all_seeders(db)
+        except Exception as e:
+            logger.error(f"Erreur lors de l'exécution des seeders: {str(e)}")
+        finally:
+            db.close()
     else:
         logger.error("Impossible de démarrer l'application en raison d'erreurs d'initialisation.")
         sys.exit(1)
@@ -79,6 +90,16 @@ if __name__ == '__main__':
         create_tables()
         # Ajouter des données de test (Canada et Cameroun)
         seed_database()
+        
+        # Exécuter les seeders personnalisés
+        logger.info("Exécution des seeders...")
+        db = SessionLocal()
+        try:
+            run_all_seeders(db)
+        except Exception as e:
+            logger.error(f"Erreur lors de l'exécution des seeders: {str(e)}")
+        finally:
+            db.close()
         # Démarrer l'application FastAPI avec uvicorn
         import uvicorn
         logger.info(f"Démarrage de l'application FastAPI sur le port {app_port}...")

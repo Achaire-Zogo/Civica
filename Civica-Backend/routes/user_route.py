@@ -180,7 +180,9 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
             status='ACTIVE',
             connexion_type='EMAIL',
             role='USER',
-            spseudo=user_pseudo
+            spseudo=user_pseudo,
+            point=0,
+            niveaux=1
         )
         
         db.add(new_user)
@@ -370,6 +372,8 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
                         'email': db_user.to_dict().get("email"),
                         'pseudo': db_user.to_dict().get("pseudo"),
                         'role': db_user.to_dict().get("role"),
+                        'point': db_user.to_dict().get("point"),
+                        'niveaux': db_user.to_dict().get("niveaux"),
                         'isverified': db_user.to_dict().get("is_verified"),
                         'expires_in': int(datetime.timestamp(datetime.now() + timedelta(days=2)))
                     }
@@ -418,6 +422,229 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         )
 
 
+
+# Update user score and level
+@router.post("/update-score/{user_id}")
+def update_user_score(user_id: str, points_earned: int, db: Session = Depends(get_db)):
+    """Met à jour le score d'un utilisateur et calcule son niveau"""
+    try:
+        # Récupérer l'utilisateur
+        user = db.query(UserEntity).filter(UserEntity.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Utilisateur non trouvé"
+            )
+        
+        # Mettre à jour le score
+        new_score = user.point + points_earned
+        
+        # Calculer le nouveau niveau basé sur le score
+        # Logique: niveau 1 = 0-99 points, niveau 2 = 100-299 points, etc.
+        new_level = (new_score // 100) + 1
+        
+        # Mettre à jour les données
+        user.point = new_score
+        user.niveaux = new_level
+        user.updated_at = datetime.utcnow()
+        
+        db.commit()
+        db.refresh(user)
+        
+        return StandardResponse(
+            success=True,
+            message="Score mis à jour avec succès",
+            data={
+                "user_id": user.id,
+                "new_score": user.point,
+                "new_level": user.niveaux,
+                "points_earned": points_earned
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la mise à jour du score: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de la mise à jour du score"
+        )
+
+# Get user statistics
+@router.get("/stats/{user_id}")
+def get_user_stats(user_id: str, db: Session = Depends(get_db)):
+    """Récupère les statistiques d'un utilisateur"""
+    try:
+        user = db.query(UserEntity).filter(UserEntity.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Utilisateur non trouvé"
+            )
+        
+        return StandardResponse(
+            success=True,
+            message="Statistiques récupérées avec succès",
+            data={
+                "user_id": user.id,
+                "pseudo": user.spseudo,
+                "email": user.email,
+                "score": user.point,
+                "level": user.niveaux,
+                "created_at": user.created_at.isoformat() if user.created_at else None
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération des stats: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de la récupération des statistiques"
+        )
+
+# Use a life (for quiz gameplay)
+@router.post("/use-life/{user_id}")
+def use_life(user_id: str, db: Session = Depends(get_db)):
+    """Utilise une vie pour jouer à un quiz"""
+    try:
+        user = db.query(UserEntity).filter(UserEntity.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Utilisateur non trouvé"
+            )
+        
+        if user.vies <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Aucune vie disponible"
+            )
+        
+        # Décrémenter les vies
+        user.vies -= 1
+        user.updated_at = datetime.utcnow()
+        
+        db.commit()
+        db.refresh(user)
+        
+        return StandardResponse(
+            success=True,
+            message="Vie utilisée avec succès",
+            data={
+                "user_id": user.id,
+                "remaining_lives": user.vies,
+                "last_life_refresh": user.last_life_refresh.isoformat() if user.last_life_refresh else None
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur lors de l'utilisation d'une vie: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de l'utilisation d'une vie"
+        )
+
+# Refresh lives (called periodically)
+@router.post("/refresh-lives/{user_id}")
+def refresh_lives(user_id: str, db: Session = Depends(get_db)):
+    """Rafraîchit les vies d'un utilisateur basé sur le temps écoulé"""
+    try:
+        user = db.query(UserEntity).filter(UserEntity.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Utilisateur non trouvé"
+            )
+        
+        now = datetime.utcnow()
+        last_refresh = user.last_life_refresh or user.created_at
+        time_diff = now - last_refresh
+        
+        # Rafraîchir une vie toutes les 30 minutes, maximum 3 vies
+        if time_diff.total_seconds() >= 1800 and user.vies < 3:  # 1800 seconds = 30 minutes
+            lives_to_add = min(int(time_diff.total_seconds() // 1800), 3 - user.vies)
+            user.vies = min(user.vies + lives_to_add, 3)
+            user.last_life_refresh = now
+            user.updated_at = now
+            
+            db.commit()
+            db.refresh(user)
+            
+            return StandardResponse(
+                success=True,
+                message=f"{lives_to_add} vie(s) rafraîchie(s)",
+                data={
+                    "user_id": user.id,
+                    "lives_added": lives_to_add,
+                    "current_lives": user.vies,
+                    "last_life_refresh": user.last_life_refresh.isoformat()
+                }
+            )
+        else:
+            return StandardResponse(
+                success=True,
+                message="Aucune vie à rafraîchir",
+                data={
+                    "user_id": user.id,
+                    "current_lives": user.vies,
+                    "next_life_in_seconds": max(0, 1800 - int(time_diff.total_seconds()))
+                }
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur lors du rafraîchissement des vies: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors du rafraîchissement des vies"
+        )
+
+# Get life status
+@router.get("/life-status/{user_id}")
+def get_life_status(user_id: str, db: Session = Depends(get_db)):
+    """Récupère le statut des vies d'un utilisateur"""
+    try:
+        user = db.query(UserEntity).filter(UserEntity.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Utilisateur non trouvé"
+            )
+        
+        now = datetime.utcnow()
+        last_refresh = user.last_life_refresh or user.created_at
+        time_diff = now - last_refresh
+        
+        # Calculer le temps jusqu'à la prochaine vie
+        next_life_in_seconds = 0
+        if user.vies < 3:
+            next_life_in_seconds = max(0, 1800 - int(time_diff.total_seconds()))
+        
+        return StandardResponse(
+            success=True,
+            message="Statut des vies récupéré",
+            data={
+                "user_id": user.id,
+                "current_lives": user.vies,
+                "max_lives": 3,
+                "next_life_in_seconds": next_life_in_seconds,
+                "last_life_refresh": user.last_life_refresh.isoformat() if user.last_life_refresh else None
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération du statut des vies: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur lors de la récupération du statut des vies"
+        )
 
 #change Password
 @router.post("/change-password")

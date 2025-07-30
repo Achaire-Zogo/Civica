@@ -20,7 +20,7 @@ class AuthService {
   }
 
   // Store user data
-  Future<void> _storeUserData(Map<String, dynamic> userData) async {
+  Future<void> storeUserData(Map<String, dynamic> userData) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userDataKey, jsonEncode(userData));
   }
@@ -63,6 +63,13 @@ class AuthService {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // Store token and user data if available after successful registration
+        if (responseData['data'] != null && responseData['data']['token'] != null) {
+          final token = responseData['data']['token'];
+          await _storeToken(token);
+          await storeUserData(responseData['data']);
+        }
+        
         return {
           'success': true,
           'message': responseData['message'] ?? 'Registration successful',
@@ -111,7 +118,7 @@ class AuthService {
         
         // Store user data if available
         if (responseData['data'] != null) {
-          await _storeUserData(responseData['data']);
+          await storeUserData(responseData['data']);
         }
 
         return {

@@ -1,9 +1,13 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/score_service.dart';
+import '../services/life_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
+  final ScoreService _scoreService = ScoreService();
+  final LifeService _lifeService = LifeService();
   UserModel? _user;
   bool _isLoading = false;
   String? _errorMessage;
@@ -46,9 +50,9 @@ class AuthProvider with ChangeNotifier {
         password: password,
         pseudo: pseudo,
       );
-      
+
       _setLoading(false);
-      
+
       if (result['success']) {
         return true;
       } else {
@@ -74,9 +78,9 @@ class AuthProvider with ChangeNotifier {
         email: email,
         password: password,
       );
-      
+
       _setLoading(false);
-      
+
       if (result['success']) {
         _token = result['token'];
         // Create user model from response data if available
@@ -84,9 +88,9 @@ class AuthProvider with ChangeNotifier {
           _user = UserModel(
             uid: result['data']['id']?.toString() ?? '',
             email: result['data']['email'] ?? email,
-            pseudo: result['data']['pseudo'] ?? '',
-            score: 0,
-            niveau: 1,
+            pseudo: result['data']['spseudo'] ?? '',
+            score: result['data']['point'] ?? 0,
+            niveau: result['data']['niveaux'] ?? 1,
             badges: ['Débutant'],
             vies: 3,
             lastLifeRefresh: DateTime.now(),
@@ -148,9 +152,9 @@ class AuthProvider with ChangeNotifier {
         oldPassword: oldPassword,
         newPassword: newPassword,
       );
-      
+
       _setLoading(false);
-      
+
       if (result['success']) {
         return true;
       } else {
@@ -194,13 +198,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // Use a life (for quiz gameplay)
-  Future<void> useLife() async {
-    if (_user != null && _user!.vies > 0) {
-      _user = _user!.copyWith(vies: _user!.vies - 1, lastLifeRefresh: DateTime.now());
-      notifyListeners();
-    }
-  }
+
 
   // Check and refresh lives based on time
   Future<void> checkAndRefreshLives() async {
@@ -208,7 +206,7 @@ class AuthProvider with ChangeNotifier {
       final now = DateTime.now();
       final lastRefresh = _user!.lastLifeRefresh ?? now;
       final timeDiff = now.difference(lastRefresh);
-      
+
       // Refresh one life every 30 minutes, max 3 lives
       if (timeDiff.inMinutes >= 30 && _user!.vies < 3) {
         final livesToAdd = (timeDiff.inMinutes ~/ 30).clamp(0, 3 - _user!.vies);
@@ -234,5 +232,181 @@ class AuthProvider with ChangeNotifier {
 
   void _clearError() {
     _errorMessage = null;
+  }
+
+  // Update user score
+  Future<bool> updateUserScore(int pointsEarned) async {
+    if (_user == null) return false;
+    
+    _setLoading(true);
+    _clearError();
+
+    try {
+      final result = await _scoreService.updateScore(
+        userId: _user!.uid,
+        pointsEarned: pointsEarned,
+      );
+
+      if (result['success']) {
+        // Update local user data
+        final data = result['data'];
+        _user = _user!.copyWith(
+          score: data['new_score'],
+          niveau: data['new_level'],
+        );
+        
+        // Update stored user data
+        await _authService.storeUserData(_user!.toJson());
+        
+        _setLoading(false);
+        return true;
+      } else {
+        _setError(result['message']);
+        _setLoading(false);
+        return false;
+      }
+    } catch (e) {
+      _setError('Erreur lors de la mise à jour du score');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  // Refresh user stats from server
+  Future<bool> refreshUserStats() async {
+    if (_user == null) return false;
+    
+    try {
+      final result = await _scoreService.getUserStats(_user!.uid);
+
+      if (result['success']) {
+        final data = result['data'];
+        _user = _user!.copyWith(
+          score: data['score'],
+          niveau: data['level'],
+        );
+        
+        // Update stored user data
+        await _authService.storeUserData(_user!.toJson());
+        
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Use a life for quiz gameplay
+  Future<bool> useLife() async {
+    if (_user == null || _user!.vies <= 0) return false;
+    
+    _setLoading(true);
+    _clearError();
+
+    try {
+      final result = await _lifeService.useLife(_user!.uid);
+
+      if (result['success']) {
+        // Update local user data
+        final data = result['data'];
+        _user = _user!.copyWith(
+          vies: data['remaining_lives'],
+        );
+        
+        // Update stored user data
+        await _authService.storeUserData(_user!.toJson());
+        
+        _setLoading(false);
+        return true;
+      } else {
+        _setError(result['message']);
+        _setLoading(false);
+        return false;
+      }
+    } catch (e) {
+      _setError('Erreur lors de l\'utilisation d\'une vie');
+      _setLoading(false);
+      return false;
+    }
+  }
+
+  // Refresh lives from server
+  Future<bool> refreshLives() async {
+    if (_user == null) return false;
+    
+    try {
+      final result = await _lifeService.refreshLives(_user!.uid);
+
+      if (result['success']) {
+        final data = result['data'];
+        _user = _user!.copyWith(
+          vies: data['current_lives'],
+          lastLifeRefresh: DateTime.now(),
+        );
+        
+        // Update stored user data
+        await _authService.storeUserData(_user!.toJson());
+        
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Get life status from server
+  Future<Map<String, dynamic>?> getLifeStatus() async {
+    if (_user == null) return null;
+    
+    try {
+      final result = await _lifeService.getLifeStatus(_user!.uid);
+
+      if (result['success']) {
+        final data = result['data'];
+        _user = _user!.copyWith(
+          vies: data['current_lives'],
+        );
+        
+        // Update stored user data
+        await _authService.storeUserData(_user!.toJson());
+        
+        notifyListeners();
+        return data;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Check if user can play (has lives)
+  bool canPlay() {
+    return _user != null && _user!.vies > 0;
+  }
+
+  // Get time until next life
+  Duration getTimeUntilNextLife() {
+    if (_user == null || _user!.vies >= 3) {
+      return Duration.zero;
+    }
+    return _lifeService.getTimeUntilNextLife(
+      _user!.lastLifeRefresh ?? DateTime.now(),
+      _user!.vies,
+    );
+  }
+
+  // Format time until next life for display
+  String formatTimeUntilNextLife() {
+    return _lifeService.formatTimeUntilNextLife(getTimeUntilNextLife());
+  }
+
+  // Get life message for UI
+  String getLifeMessage() {
+    if (_user == null) return "Statut des vies inconnu";
+    return _lifeService.getLifeMessage(_user!.vies);
   }
 }

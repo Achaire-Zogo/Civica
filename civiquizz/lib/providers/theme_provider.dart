@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 import '../services/theme_service.dart';
+import '../models/theme_model.dart';
+import '../models/level_model.dart';
+import '../models/question_model.dart';
 
 class ThemeProvider with ChangeNotifier {
   final ThemeService _themeService = ThemeService();
   
-  List<Map<String, dynamic>> _themes = [];
-  Map<String, dynamic>? _currentTheme;
-  List<Map<String, dynamic>> _currentLevels = [];
-  Map<String, dynamic>? _currentLevel;
+  List<ThemeModel> _themes = [];
+  ThemeModel? _currentTheme;
+  List<LevelModel> _currentLevels = [];
+  LevelModel? _currentLevel;
+  List<QuestionModel> _currentQuestions = [];
   bool _isLoading = false;
   String? _error;
 
   // Getters
-  List<Map<String, dynamic>> get themes => _themes;
-  Map<String, dynamic>? get currentTheme => _currentTheme;
-  List<Map<String, dynamic>> get currentLevels => _currentLevels;
-  Map<String, dynamic>? get currentLevel => _currentLevel;
+  List<ThemeModel> get themes => _themes;
+  ThemeModel? get currentTheme => _currentTheme;
+  List<LevelModel> get currentLevels => _currentLevels;
+  LevelModel? get currentLevel => _currentLevel;
+  List<QuestionModel> get currentQuestions => _currentQuestions;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -28,7 +33,9 @@ class ThemeProvider with ChangeNotifier {
       final result = await _themeService.getAllThemes();
       
       if (result['success']) {
-        _themes = List<Map<String, dynamic>>.from(result['data']);
+        _themes = (result['data'] as List)
+            .map((themeData) => ThemeModel.fromJson(themeData))
+            .toList();
         notifyListeners();
       } else {
         _setError(result['message']);
@@ -49,7 +56,7 @@ class ThemeProvider with ChangeNotifier {
       final result = await _themeService.getThemeById(themeId);
       
       if (result['success']) {
-        _currentTheme = result['data'];
+        _currentTheme = ThemeModel.fromJson(result['data']);
         notifyListeners();
       } else {
         _setError(result['message']);
@@ -70,7 +77,9 @@ class ThemeProvider with ChangeNotifier {
       final result = await _themeService.getThemeLevels(themeId);
       
       if (result['success']) {
-        _currentLevels = List<Map<String, dynamic>>.from(result['data']);
+        _currentLevels = (result['data'] as List)
+            .map((levelData) => LevelModel.fromJson(levelData))
+            .toList();
         notifyListeners();
       } else {
         _setError(result['message']);
@@ -91,13 +100,59 @@ class ThemeProvider with ChangeNotifier {
       final result = await _themeService.getLevelById(levelId);
       
       if (result['success']) {
-        _currentLevel = result['data'];
+        _currentLevel = LevelModel.fromJson(result['data']);
+        if (_currentLevel?.questions != null) {
+          _currentQuestions = _currentLevel!.questions!;
+        }
         notifyListeners();
       } else {
         _setError(result['message']);
       }
     } catch (e) {
       _setError('Failed to load level: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Load questions for a level
+  Future<void> loadLevelQuestions(String levelId) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      debugPrint('Loading questions for level: $levelId');
+      final result = await _themeService.getLevelQuestions(levelId);
+      
+      debugPrint('API result: $result');
+      
+      if (result['success'] == true) {
+        final questionsData = result['data'] as List;
+        debugPrint('Questions data count: ${questionsData.length}');
+        
+        _currentQuestions = questionsData
+            .map((questionData) {
+              try {
+                return QuestionModel.fromJson(questionData as Map<String, dynamic>);
+              } catch (e) {
+                debugPrint('Error parsing question: $e');
+                debugPrint('Question data: $questionData');
+                rethrow;
+              }
+            })
+            .toList();
+        
+        debugPrint('Successfully parsed ${_currentQuestions.length} questions');
+        notifyListeners();
+      } else {
+        final errorMessage = result['message'] ?? 'Unknown error';
+        debugPrint('API error: $errorMessage');
+        _setError(errorMessage);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Exception in loadLevelQuestions: $e');
+      debugPrint('Stack trace: $stackTrace');
+      _setError('Failed to load level questions: $e');
     } finally {
       _setLoading(false);
     }
@@ -138,18 +193,18 @@ class ThemeProvider with ChangeNotifier {
   }
 
   // Get theme by ID from loaded themes
-  Map<String, dynamic>? getThemeById(String themeId) {
+  ThemeModel? getThemeById(String themeId) {
     try {
-      return _themes.firstWhere((theme) => theme['id'] == themeId);
+      return _themes.firstWhere((theme) => theme.id == themeId);
     } catch (e) {
       return null;
     }
   }
 
   // Get level by ID from current levels
-  Map<String, dynamic>? getLevelById(String levelId) {
+  LevelModel? getLevelById(String levelId) {
     try {
-      return _currentLevels.firstWhere((level) => level['id'] == levelId);
+      return _currentLevels.firstWhere((level) => level.id == levelId);
     } catch (e) {
       return null;
     }

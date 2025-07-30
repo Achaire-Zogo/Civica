@@ -174,3 +174,47 @@ def create_level(level: LevelCreate, db: Session = Depends(get_db)):
                 "error": str(e)
             }
         )
+
+@router.get("/{level_id}/questions")
+def get_level_questions(level_id: str, db: Session = Depends(get_db)):
+    """Get all questions for a specific level"""
+    try:
+        # Verify level exists
+        level = db.query(LevelEntity).filter(
+            LevelEntity.id == level_id,
+            LevelEntity.is_active == True
+        ).first()
+        
+        if not level:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "message": "Level not found",
+                    "data": None
+                }
+            )
+        
+        # Get questions for this level
+        questions = db.query(QuestionEntity).filter(
+            QuestionEntity.level_id == level_id,
+            QuestionEntity.is_active == True
+        ).order_by(QuestionEntity.order_index).all()
+        
+        questions_list = [question.to_dict() for question in questions]
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Level questions retrieved successfully",
+                "data": questions_list
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error getting level questions: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Internal server error",
+                "data": None
+            }
+        )

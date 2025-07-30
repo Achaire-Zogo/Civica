@@ -42,6 +42,10 @@ class UserEntity(Base):
     role = Column(SQLEnum(Role), default=Role.USER)
     is_deleted = Column(Boolean, default=False)
     fcm_token = Column(String(255), nullable=True)
+    point = Column(Integer, default=0, nullable=False)
+    niveaux = Column(Integer, default=1, nullable=False)
+    vies = Column(Integer, default=3, nullable=False)
+    last_life_refresh = Column(DateTime, default=func.now(), nullable=False)
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
     
@@ -58,6 +62,10 @@ class UserEntity(Base):
             'role': self.role.value,
             'is_deleted': self.is_deleted,
             'fcm_token': self.fcm_token,
+            'point': self.point,
+            'niveaux': self.niveaux,
+            'vies': self.vies,
+            'last_life_refresh': self.last_life_refresh.isoformat() if self.last_life_refresh else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
@@ -74,6 +82,10 @@ class UserBase(BaseModel):
     role: Optional[Role] = None
     is_deleted: Optional[bool] = None
     fcm_token: Optional[str] = None
+    point: Optional[int] = None
+    niveaux: Optional[int] = None
+    vies: Optional[int] = None
+    last_life_refresh: Optional[str] = None
     created_at: str
     updated_at: str
 
@@ -91,6 +103,8 @@ class UserUpdate(UserBase):
     role: Optional[Role] = None
     is_deleted: Optional[bool] = None
     fcm_token: Optional[str] = None
+    point: Optional[int] = None
+    niveaux: Optional[int] = None
 
 class UserLogin(BaseModel):
     """Model for user login credentials"""

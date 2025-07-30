@@ -218,6 +218,93 @@ def delete_theme(theme_id: str, db: Session = Depends(get_db)):
             }
         )
 
+@router.get("/{theme_id}/levels")
+def get_theme_levels(theme_id: str, db: Session = Depends(get_db)):
+    """Get all levels for a specific theme"""
+    try:
+        # Verify theme exists
+        theme = db.query(ThemeEntity).filter(
+            ThemeEntity.id == theme_id,
+            ThemeEntity.is_active == True
+        ).first()
+        
+        if not theme:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "message": "Theme not found",
+                    "data": None
+                }
+            )
+        
+        # Get levels for this theme
+        levels = db.query(LevelEntity).filter(
+            LevelEntity.theme_id == theme_id,
+            LevelEntity.is_active == True
+        ).order_by(LevelEntity.order_index).all()
+        
+        levels_list = [level.to_dict() for level in levels]
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Theme levels retrieved successfully",
+                "data": levels_list
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error getting theme levels: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Internal server error",
+                "data": None
+            }
+        )
+
+@router.get("/level/{level_id}/questions")
+def get_level_questions(level_id: str, db: Session = Depends(get_db)):
+    """Get all questions for a specific level"""
+    try:
+        # Verify level exists
+        level = db.query(LevelEntity).filter(
+            LevelEntity.id == level_id,
+            LevelEntity.is_active == True
+        ).first()
+        
+        if not level:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "message": "Level not found",
+                    "data": None
+                }
+            )
+        
+        # Get questions for this level
+        questions = db.query(QuestionEntity).filter(
+            QuestionEntity.level_id == level_id,
+            QuestionEntity.is_active == True
+        ).order_by(QuestionEntity.order_index).all()
+        
+        questions_list = [question.to_dict() for question in questions]
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Level questions retrieved successfully",
+                "data": questions_list
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error getting level questions: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Internal server error",
+                "data": None
+            }
+        )
 
 
 # UTILITY ENDPOINTS

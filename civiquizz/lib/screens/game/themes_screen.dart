@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/theme_provider.dart';
+import '../../models/theme_model.dart';
+import 'levels_screen.dart';
 
 class ThemesScreen extends StatefulWidget {
   const ThemesScreen({Key? key}) : super(key: key);
@@ -180,9 +182,9 @@ class _ThemesScreenState extends State<ThemesScreen> {
     );
   }
 
-  void _navigateToLevels(BuildContext context, Map<String, dynamic> theme) {
+  void _navigateToLevels(BuildContext context, ThemeModel theme) {
     // Check if theme is active
-    if (theme['is_active'] != true) {
+    if (!theme.isActive) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -195,24 +197,12 @@ class _ThemesScreenState extends State<ThemesScreen> {
       return;
     }
 
-    // For now, show a message that levels integration is coming soon
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Intégration des niveaux en cours de développement. Thème: ${theme['title']}',
-          style: GoogleFonts.poppins(),
-        ),
-        backgroundColor: const Color(0xFF3498DB),
-        duration: const Duration(seconds: 3),
+    // Navigate to LevelsScreen with the theme
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => LevelsScreen(theme: theme),
       ),
     );
-    
-    // TODO: Navigate to updated LevelsScreen once it's adapted for backend
-    // Navigator.of(context).push(
-    //   MaterialPageRoute(
-    //     builder: (context) => LevelsScreen(themeData: theme),
-    //   ),
-    // );
   }
 
   void _seedData(BuildContext context) async {
@@ -273,24 +263,23 @@ class _ThemesScreenState extends State<ThemesScreen> {
 }
 
 class _ThemeCard extends StatelessWidget {
-  final Map<String, dynamic> theme;
+  final ThemeModel theme;
   final VoidCallback onTap;
 
   const _ThemeCard({
-    Key? key,
     required this.theme,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Extract theme data with safe defaults
-    final String title = theme['title'] ?? 'Thème sans nom';
-    final String description = theme['description'] ?? 'Aucune description';
-    final String icon = theme['icon'] ?? '📚';
-    final String color = theme['color'] ?? '#3498DB';
-    final bool isActive = theme['is_active'] ?? false;
-    final int levelsCount = theme['levels_count'] ?? 0;
+    // Extract theme data
+    final String title = theme.title;
+    final String description = theme.description;
+    final String icon = theme.icon;
+    final String color = theme.color;
+    final bool isActive = theme.isActive;
+    final int levelsCount = theme.levels?.length ?? 0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

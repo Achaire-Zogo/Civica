@@ -138,35 +138,7 @@ class DatabaseService {
       }
 
       // Créer les thèmes de base
-      List<ThemeModel> themes = [
-        ThemeModel(
-          id: 'constitution',
-          nom: 'Constitution',
-          description: 'Questions sur la Constitution française',
-          icone: '📜',
-          couleur: '#3498db',
-          sousThemes: ['Droits fondamentaux', 'Institutions', 'Révision'],
-          isUnlocked: true,
-        ),
-        ThemeModel(
-          id: 'elections',
-          nom: 'Code électoral',
-          description: 'Questions sur les élections et le code électoral',
-          icone: '🗳️',
-          couleur: '#e74c3c',
-          sousThemes: ['Élections présidentielles', 'Élections législatives', 'Élections locales'],
-          isUnlocked: false,
-        ),
-        ThemeModel(
-          id: 'institutions',
-          nom: 'Institutions',
-          description: 'Questions sur les institutions françaises',
-          icone: '🏛️',
-          couleur: '#f39c12',
-          sousThemes: ['Exécutif', 'Législatif', 'Judiciaire'],
-          isUnlocked: false,
-        ),
-      ];
+      List<ThemeModel> themes = [];
 
       for (ThemeModel theme in themes) {
         await _firestore.collection('themes').doc(theme.id).set(theme.toJson());

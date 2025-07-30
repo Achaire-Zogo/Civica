@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/game_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../game/themes_screen.dart';
 import '../game/rang.dart';
@@ -27,12 +27,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _initializeGame() async {
-    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    await gameProvider.initializeGameData();
+    // Charger les thèmes depuis le backend
+    await themeProvider.loadThemes();
+    
     if (authProvider.user != null) {
-      await gameProvider.loadUserProgress(authProvider.user!.uid);
+      // Refresh user stats from server to ensure data is up to date
+      await authProvider.refreshUserStats();
+      // Refresh lives to check for automatic regeneration
+      await authProvider.refreshLives();
     }
   }
 

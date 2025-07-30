@@ -160,6 +160,41 @@ class ThemeService {
     }
   }
 
+  // Get questions for a level
+  Future<Map<String, dynamic>> getLevelQuestions(String levelId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${Url.getLevelQuestions}$levelId/questions'),
+        headers: headers,
+      );
+
+      log('Get level questions response: ${response.statusCode}');
+      log('Get level questions body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'success': true,
+          'data': data['data'] ?? [],
+          'message': data['message'] ?? 'Level questions retrieved successfully'
+        };
+      } else {
+        final errorData = json.decode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Failed to get level questions'
+        };
+      }
+    } catch (e) {
+      log('Error getting level questions: $e');
+      return {
+        'success': false,
+        'message': 'Network error: Unable to connect to server'
+      };
+    }
+  }
+
   // Check answer for a question
   Future<Map<String, dynamic>> checkAnswer(
       String questionId, String selectedAnswer) async {

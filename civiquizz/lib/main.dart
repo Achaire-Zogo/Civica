@@ -6,17 +6,18 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/game_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/quiz_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialiser Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   runApp(const CiviquizzApp());
 }
 
@@ -30,9 +31,10 @@ class CiviquizzApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => GameProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => QuizProvider()),
       ],
       child: MaterialApp(
-        title: 'Civiquizz - Le Jeu de la Constitution',
+        title: 'Civica - Le Jeu de la Constitution',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -95,7 +97,7 @@ class AuthWrapper extends StatelessWidget {
             ),
           );
         }
-        
+
         // Rediriger vers l'écran approprié selon l'état d'authentification
         if (authProvider.isAuthenticated) {
           return const HomeScreen();
