@@ -26,7 +26,7 @@ class ProfileScreen extends StatelessWidget {
           child: Consumer<AuthProvider>(
             builder: (context, authProvider, child) {
               final user = authProvider.user;
-              
+
               if (user == null) {
                 return const Center(
                   child: CircularProgressIndicator(
@@ -47,7 +47,7 @@ class ProfileScreen extends StatelessWidget {
                           icon: const Icon(
                             Icons.arrow_back,
                             color: Colors.white,
-                            size: 28,
+                            size: 10,
                           ),
                         ),
                         Expanded(
@@ -55,40 +55,17 @@ class ProfileScreen extends StatelessWidget {
                             'Mon Profil',
                             style: GoogleFonts.poppins(
                               color: Colors.white,
-                              fontSize: 24,
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
                           ),
                         ),
-                        const SizedBox(width: 48), // Pour équilibrer le bouton retour
+                        const SizedBox(
+                            width: 20), // Pour équilibrer le bouton retour
                       ],
                     ),
-                    const SizedBox(height: 32),
-
-                    // Photo de profil et informations principales
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        size: 60,
-                        color: Color(0xFF3498DB),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
+                    const SizedBox(height: 2),
                     Text(
                       user.pseudo,
                       style: GoogleFonts.poppins(
@@ -106,7 +83,7 @@ class ProfileScreen extends StatelessWidget {
                         color: Colors.white.withOpacity(0.9),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 2),
 
                     // Statistiques principales
                     Container(
@@ -132,8 +109,7 @@ class ProfileScreen extends StatelessWidget {
                               color: const Color(0xFF2C3E50),
                             ),
                           ),
-                          const SizedBox(height: 20),
-
+                          const SizedBox(height: 10),
                           Row(
                             children: [
                               Expanded(
@@ -156,7 +132,6 @@ class ProfileScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 16),
-
                           Row(
                             children: [
                               Expanded(
@@ -181,7 +156,7 @@ class ProfileScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 15),
 
                     // Badges obtenus
                     if (user.badges.isNotEmpty) ...[
@@ -230,7 +205,8 @@ class ProfileScreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFF3498DB).withOpacity(0.3),
+                                        color: const Color(0xFF3498DB)
+                                            .withOpacity(0.3),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
                                       ),

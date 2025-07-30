@@ -10,10 +10,32 @@ export interface User {
 
 export interface Level {
   id: string;
-  name: string;
-  requiredPoints: number;
-  description: string;
-  order: number;
+  theme_id: string;
+  title: string;
+  description?: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  order_index: number;
+  is_active: boolean;
+  min_score_to_unlock: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Question {
+  id: string;
+  level_id: string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_answer: 'A' | 'B' | 'C' | 'D';
+  explanation?: string;
+  points: number;
+  order_index: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Theme {
@@ -26,16 +48,7 @@ export interface Theme {
   updated_at?: string;
 }
 
-export interface Question {
-  id: string;
-  text: string;
-  options: string[];
-  correctAnswer: number;
-  points: number;
-  themeId: string;
-  levelId: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-}
+
 
 export interface AuthContextType {
   user: User | null;

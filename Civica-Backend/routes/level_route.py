@@ -29,6 +29,29 @@ router = APIRouter(
 
 # LEVEL ENDPOINTS
 
+@router.get("/")
+def get_levels(db: Session = Depends(get_db)):
+    """Get all levels"""
+    try:
+        levels = db.query(LevelEntity).filter(LevelEntity.is_active == True).order_by(LevelEntity.order_index).all()
+        level_list = [level.to_dict() for level in levels]
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Levels retrieved successfully",
+                "data": level_list
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error getting levels: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Internal server error",
+                "error": str(e)
+            }
+        )
+
 @router.get("/{theme_id}/levels")
 def get_theme_levels(theme_id: str, db: Session = Depends(get_db)):
     """Get all levels for a specific theme"""

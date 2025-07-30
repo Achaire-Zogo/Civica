@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -16,60 +16,107 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Chip
+  Chip,
+  CircularProgress,
+  Alert,
+  Snackbar,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Switch,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
-import { Edit, Delete, Add, ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import { Edit, Delete, Add, ArrowUpward, ArrowDownward, Refresh } from '@mui/icons-material';
 import DashboardLayout from '../components/DashboardLayout';
-import { Level } from '../types';
+import { Level, Theme } from '../types';
+import { apiService } from '../services/api';
 
 const LevelsPage: React.FC = () => {
-  const [levels, setLevels] = useState<Level[]>([
-    {
-      id: '1',
-      name: 'Débutant',
-      requiredPoints: 0,
-      description: 'Niveau de base pour commencer',
-      order: 1
-    },
-    {
-      id: '2',
-      name: 'Intermédiaire',
-      requiredPoints: 100,
-      description: 'Niveau pour utilisateurs avec quelques connaissances',
-      order: 2
-    },
-    {
-      id: '3',
-      name: 'Avancé',
-      requiredPoints: 250,
-      description: 'Niveau pour utilisateurs expérimentés',
-      order: 3
-    },
-    {
-      id: '4',
-      name: 'Expert',
-      requiredPoints: 500,
-      description: 'Niveau le plus élevé',
-      order: 4
-    }
-  ]);
+  const [levels, setLevels] = useState<Level[]>([]);
+  const [themes, setThemes] = useState<Theme[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [selectedThemeId, setSelectedThemeId] = useState<string>('');
 
   const [open, setOpen] = useState(false);
   const [editingLevel, setEditingLevel] = useState<Level | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    requiredPoints: 0,
+    theme_id: '',
+    title: '',
     description: '',
-    order: 1
+    difficulty: 'easy' as 'easy' | 'medium' | 'hard',
+    order_index: 0,
+    is_active: true,
+    min_score_to_unlock: 0
   });
+  const [submitting, setSubmitting] = useState(false);
+
+  // Load data from API on component mount
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  useEffect(() => {
+    if (selectedThemeId) {
+      loadLevels(selectedThemeId);
+    }
+  }, [selectedThemeId]);
+
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const themesData = await apiService.getThemes();
+      setThemes(themesData);
+      
+      // Load all levels initially
+      const levelsData = await apiService.getLevels();
+      setLevels(levelsData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des données';
+      setError(errorMessage);
+      showSnackbar(errorMessage, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadLevels = async (themeId?: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const levelsData = await apiService.getLevels(themeId);
+      setLevels(levelsData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors du chargement des niveaux';
+      setError(errorMessage);
+      showSnackbar(errorMessage, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showSnackbar = (message: string, severity: 'success' | 'error') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const closeSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const handleAdd = () => {
     setEditingLevel(null);
     setFormData({
-      name: '',
-      requiredPoints: 0,
+      theme_id: selectedThemeId || (themes.length > 0 ? themes[0].id.toString() : ''),
+      title: '',
       description: '',
-      order: levels.length + 1
+      difficulty: 'easy',
+      order_index: levels.length,
+      is_active: true,
+      min_score_to_unlock: 0
     });
     setOpen(true);
   };
@@ -77,33 +124,62 @@ const LevelsPage: React.FC = () => {
   const handleEdit = (level: Level) => {
     setEditingLevel(level);
     setFormData({
-      name: level.name,
-      requiredPoints: level.requiredPoints,
-      description: level.description,
-      order: level.order
+      theme_id: level.theme_id,
+      title: level.title,
+      description: level.description || '',
+      difficulty: level.difficulty,
+      order_index: level.order_index,
+      is_active: level.is_active,
+      min_score_to_unlock: level.min_score_to_unlock
     });
     setOpen(true);
   };
 
-  const handleSave = () => {
-    if (editingLevel) {
-      setLevels(levels.map(level => 
-        level.id === editingLevel.id 
-          ? { ...level, ...formData }
-          : level
-      ));
-    } else {
-      const newLevel: Level = {
-        id: Date.now().toString(),
-        ...formData
-      };
-      setLevels([...levels, newLevel]);
+  const handleSave = async () => {
+    if (!formData.title.trim()) {
+      showSnackbar('Le titre est requis', 'error');
+      return;
     }
-    setOpen(false);
+
+    try {
+      setSubmitting(true);
+      
+      if (editingLevel) {
+        // Update existing level
+        const updatedLevel = await apiService.updateLevel(editingLevel.id, formData);
+        setLevels(levels.map(level => 
+          level.id === editingLevel.id ? updatedLevel : level
+        ));
+        showSnackbar('Niveau mis à jour avec succès', 'success');
+      } else {
+        // Create new level
+        const newLevel = await apiService.createLevel(formData);
+        setLevels([...levels, newLevel]);
+        showSnackbar('Niveau créé avec succès', 'success');
+      }
+      
+      setOpen(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la sauvegarde';
+      showSnackbar(errorMessage, 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDelete = (levelId: string) => {
-    setLevels(levels.filter(level => level.id !== levelId));
+  const handleDelete = async (levelId: string) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce niveau ?')) {
+      return;
+    }
+
+    try {
+      await apiService.deleteLevel(levelId);
+      setLevels(levels.filter(level => level.id !== levelId));
+      showSnackbar('Niveau supprimé avec succès', 'success');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la suppression';
+      showSnackbar(errorMessage, 'error');
+    }
   };
 
   const moveLevel = (levelId: string, direction: 'up' | 'down') => {
@@ -117,116 +193,189 @@ const LevelsPage: React.FC = () => {
       [newLevels[levelIndex], newLevels[targetIndex]] = [newLevels[targetIndex], newLevels[levelIndex]];
       
       // Update order numbers
-      newLevels[levelIndex].order = levelIndex + 1;
-      newLevels[targetIndex].order = targetIndex + 1;
+      newLevels[levelIndex].order_index = levelIndex + 1;
+      newLevels[targetIndex].order_index = targetIndex + 1;
       
       setLevels(newLevels);
     }
   };
 
-  const sortedLevels = [...levels].sort((a, b) => a.order - b.order);
+  const sortedLevels = [...levels].sort((a, b) => a.order_index - b.order_index);
 
   return (
     <DashboardLayout title="Gestion des niveaux">
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4">Niveaux</Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleAdd}
-          >
-            Ajouter un niveau
-          </Button>
+          <Box display="flex" gap={2} alignItems="center">
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Filtrer par thème</InputLabel>
+              <Select
+                value={selectedThemeId}
+                label="Filtrer par thème"
+                onChange={(e) => setSelectedThemeId(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>Tous les thèmes</em>
+                </MenuItem>
+                {themes.map((theme) => (
+                  <MenuItem key={theme.id} value={theme.id.toString()}>
+                    {theme.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <IconButton onClick={() => loadLevels(selectedThemeId)} disabled={loading}>
+              <Refresh />
+            </IconButton>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAdd}
+              disabled={loading}
+            >
+              Ajouter un niveau
+            </Button>
+          </Box>
         </Box>
 
         <Typography variant="body2" color="text.secondary" paragraph>
-          Configurez les niveaux et les points requis pour que les utilisateurs puissent progresser.
+          Configurez les niveaux et les scores requis pour que les utilisateurs puissent progresser dans chaque thème.
         </Typography>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Ordre</TableCell>
-                <TableCell>Nom</TableCell>
-                <TableCell>Points requis</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sortedLevels.map((level, index) => (
-                <TableRow key={level.id}>
-                  <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Chip label={level.order} size="small" />
-                      <IconButton 
-                        size="small" 
-                        onClick={() => moveLevel(level.id, 'up')}
-                        disabled={index === 0}
-                      >
-                        <ArrowUpward fontSize="small" />
-                      </IconButton>
-                      <IconButton 
-                        size="small" 
-                        onClick={() => moveLevel(level.id, 'down')}
-                        disabled={index === sortedLevels.length - 1}
-                      >
-                        <ArrowDownward fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="subtitle2">{level.name}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={`${level.requiredPoints} pts`} 
-                      color="primary" 
-                      variant="outlined"
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>{level.description}</TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => handleEdit(level)} size="small">
-                      <Edit />
-                    </IconButton>
-                    <IconButton 
-                      onClick={() => handleDelete(level.id)} 
-                      size="small"
-                      color="error"
-                    >
-                      <Delete />
-                    </IconButton>
-                  </TableCell>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {loading && (
+          <Box display="flex" justifyContent="center" my={4}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {!loading && (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Ordre</TableCell>
+                  <TableCell>Titre</TableCell>
+                  <TableCell>Thème</TableCell>
+                  <TableCell>Difficulté</TableCell>
+                  <TableCell>Score min</TableCell>
+                  <TableCell>Statut</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {sortedLevels.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      <Typography color="text.secondary">
+                        {selectedThemeId ? 'Aucun niveau trouvé pour ce thème' : 'Aucun niveau trouvé'}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  sortedLevels.map((level, index) => {
+                    const theme = themes.find(t => t.id.toString() === level.theme_id);
+                    return (
+                      <TableRow key={level.id}>
+                        <TableCell>
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Chip label={level.order_index} size="small" />
+                            <IconButton 
+                              size="small" 
+                              onClick={() => moveLevel(level.id, 'up')}
+                              disabled={index === 0}
+                            >
+                              <ArrowUpward fontSize="small" />
+                            </IconButton>
+                            <IconButton 
+                              size="small" 
+                              onClick={() => moveLevel(level.id, 'down')}
+                              disabled={index === sortedLevels.length - 1}
+                            >
+                              <ArrowDownward fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="medium">
+                            {level.title}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {theme?.title || 'Thème inconnu'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={level.difficulty} 
+                            size="small"
+                            color={level.difficulty === 'easy' ? 'success' : level.difficulty === 'medium' ? 'warning' : 'error'}
+                          />
+                        </TableCell>
+                        <TableCell>{level.min_score_to_unlock}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={level.is_active ? 'Actif' : 'Inactif'} 
+                            size="small"
+                            color={level.is_active ? 'success' : 'default'}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {level.description || 'Aucune description'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton onClick={() => handleEdit(level)} size="small">
+                            <Edit />
+                          </IconButton>
+                          <IconButton onClick={() => handleDelete(level.id)} size="small" color="error">
+                            <Delete />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
         <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>
             {editingLevel ? 'Modifier le niveau' : 'Ajouter un niveau'}
           </DialogTitle>
           <DialogContent>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Thème</InputLabel>
+              <Select
+                value={formData.theme_id}
+                label="Thème"
+                onChange={(e) => setFormData({...formData, theme_id: e.target.value})}
+              >
+                {themes.map((theme) => (
+                  <MenuItem key={theme.id} value={theme.id.toString()}>
+                    {theme.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               fullWidth
-              label="Nom du niveau"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              label="Titre du niveau"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
               margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Points requis"
-              type="number"
-              value={formData.requiredPoints}
-              onChange={(e) => setFormData({...formData, requiredPoints: parseInt(e.target.value) || 0})}
-              margin="normal"
-              helperText="Nombre de points nécessaires pour atteindre ce niveau"
+              required
             />
             <TextField
               fullWidth
@@ -237,23 +386,67 @@ const LevelsPage: React.FC = () => {
               onChange={(e) => setFormData({...formData, description: e.target.value})}
               margin="normal"
             />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Difficulté</InputLabel>
+              <Select
+                value={formData.difficulty}
+                label="Difficulté"
+                onChange={(e) => setFormData({...formData, difficulty: e.target.value as 'easy' | 'medium' | 'hard'})}
+              >
+                <MenuItem value="easy">Facile</MenuItem>
+                <MenuItem value="medium">Moyen</MenuItem>
+                <MenuItem value="hard">Difficile</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               fullWidth
-              label="Ordre"
+              label="Ordre d'affichage"
               type="number"
-              value={formData.order}
-              onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 1})}
+              value={formData.order_index}
+              onChange={(e) => setFormData({...formData, order_index: parseInt(e.target.value) || 0})}
               margin="normal"
-              helperText="Position du niveau dans la hiérarchie"
+            />
+            <TextField
+              fullWidth
+              label="Score minimum pour débloquer"
+              type="number"
+              value={formData.min_score_to_unlock}
+              onChange={(e) => setFormData({...formData, min_score_to_unlock: parseInt(e.target.value) || 0})}
+              margin="normal"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
+                />
+              }
+              label="Niveau actif"
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={handleSave} variant="contained">
-              {editingLevel ? 'Modifier' : 'Ajouter'}
+            <Button onClick={() => setOpen(false)} disabled={submitting}>
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleSave} 
+              variant="contained" 
+              disabled={submitting}
+            >
+              {submitting ? 'Sauvegarde...' : (editingLevel ? 'Modifier' : 'Ajouter')}
             </Button>
           </DialogActions>
         </Dialog>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={closeSnackbar}
+        >
+          <Alert onClose={closeSnackbar} severity={snackbar.severity}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </DashboardLayout>
   );

@@ -29,6 +29,29 @@ router = APIRouter(
 )
 # QUESTION ENDPOINTS
 
+@router.get("/")
+def get_questions(db: Session = Depends(get_db)):
+    """Get all questions"""
+    try:
+        questions = db.query(QuestionEntity).filter(QuestionEntity.is_active == True).order_by(QuestionEntity.order_index).all()
+        question_list = [question.to_dict() for question in questions]
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Questions retrieved successfully",
+                "data": question_list
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error getting questions: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Internal server error",
+                "error": str(e)
+            }
+        )
+
 @router.post("/question")
 def create_question(question: QuestionCreate, db: Session = Depends(get_db)):
     """Create a new question"""

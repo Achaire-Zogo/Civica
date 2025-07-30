@@ -1,3 +1,6 @@
+// Import types from shared types file
+import type { Question } from '../types';
+
 const API_BASE_URL = 'http://192.168.1.143:5002/api';
 
 interface ApiResponse<T> {
@@ -15,6 +18,21 @@ interface Theme {
   created_at: string;
   updated_at: string;
 }
+
+interface Level {
+  id: string;
+  theme_id: string;
+  title: string;
+  description?: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  order_index: number;
+  is_active: boolean;
+  min_score_to_unlock: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+
 
 class ApiService {
   private getAuthHeaders(): HeadersInit {
@@ -75,6 +93,129 @@ class ApiService {
     await this.handleResponse<ApiResponse<null>>(response);
   }
 
+  // Level API methods
+  async getLevels(themeId?: string): Promise<Level[]> {
+    const url = themeId 
+      ? `${API_BASE_URL}/theme/${themeId}/levels`
+      : `${API_BASE_URL}/level/`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    
+    const data = await this.handleResponse<ApiResponse<Level[]>>(response);
+    return data.data;
+  }
+
+  async getLevel(id: string): Promise<Level> {
+    const response = await fetch(`${API_BASE_URL}/level/${id}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    
+    const data = await this.handleResponse<ApiResponse<Level>>(response);
+    return data.data;
+  }
+
+  async createLevel(level: Omit<Level, 'id' | 'created_at' | 'updated_at'>): Promise<Level> {
+    const response = await fetch(`${API_BASE_URL}/level`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(level),
+    });
+    
+    const data = await this.handleResponse<ApiResponse<Level>>(response);
+    return data.data;
+  }
+
+  async updateLevel(id: string, level: Partial<Omit<Level, 'id' | 'created_at' | 'updated_at'>>): Promise<Level> {
+    const response = await fetch(`${API_BASE_URL}/level/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(level),
+    });
+    
+    const data = await this.handleResponse<ApiResponse<Level>>(response);
+    return data.data;
+  }
+
+  async deleteLevel(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/level/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    
+    await this.handleResponse<ApiResponse<null>>(response);
+  }
+
+  // Question API methods
+  async getQuestions(levelId?: string): Promise<Question[]> {
+    const url = levelId 
+      ? `${API_BASE_URL}/level/${levelId}/questions`
+      : `${API_BASE_URL}/question/`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    
+    const data = await this.handleResponse<ApiResponse<Question[]>>(response);
+    return data.data;
+  }
+
+  async getQuestion(id: string): Promise<Question> {
+    const response = await fetch(`${API_BASE_URL}/question/${id}`, {
+      method: 'GET',
+      headers: this.getAuthHeaders(),
+    });
+    
+    const data = await this.handleResponse<ApiResponse<Question>>(response);
+    return data.data;
+  }
+
+  async createQuestion(question: Omit<Question, 'id' | 'created_at' | 'updated_at'>): Promise<Question> {
+    const response = await fetch(`${API_BASE_URL}/question/question`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(question),
+    });
+    
+    const data = await this.handleResponse<ApiResponse<Question>>(response);
+    return data.data;
+  }
+
+  async updateQuestion(id: string, question: Partial<Omit<Question, 'id' | 'created_at' | 'updated_at'>>): Promise<Question> {
+    const response = await fetch(`${API_BASE_URL}/question/${id}`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify(question),
+    });
+    
+    const data = await this.handleResponse<ApiResponse<Question>>(response);
+    return data.data;
+  }
+
+  async deleteQuestion(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/question/${id}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    
+    await this.handleResponse<ApiResponse<null>>(response);
+  }
+
+  async checkAnswer(questionId: string, answer: string): Promise<{ correct: boolean; explanation?: string }> {
+    const response = await fetch(`${API_BASE_URL}/question/${questionId}/check`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ answer }),
+    });
+    
+    const data = await this.handleResponse<ApiResponse<{ correct: boolean; explanation?: string }>>(response);
+    return data.data;
+  }
+
   // Authentication methods
   async login(email: string, password: string): Promise<{ token: string; user: any }> {
     const response = await fetch(`${API_BASE_URL}/user/login`, {
@@ -108,4 +249,4 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
-export type { Theme };
+export type { Theme, Level };
