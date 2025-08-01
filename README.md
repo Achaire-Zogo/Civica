@@ -285,7 +285,7 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 ## 📞 Support
 
 Pour toute question ou problème :
-- 📧 Email : support@civica.com
+- 📧 Email : dylanabouma@gmail.com
 - 📚 Documentation : Voir `description.md`
 - 🐛 Issues : GitHub Issues
 

@@ -78,6 +78,7 @@ class AuthProvider with ChangeNotifier {
         email: email,
         password: password,
       );
+      print(result);
 
       _setLoading(false);
 
@@ -198,8 +199,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-
-
   // Check and refresh lives based on time
   Future<void> checkAndRefreshLives() async {
     if (_user != null) {
@@ -237,7 +236,7 @@ class AuthProvider with ChangeNotifier {
   // Update user score
   Future<bool> updateUserScore(int pointsEarned) async {
     if (_user == null) return false;
-    
+
     _setLoading(true);
     _clearError();
 
@@ -254,10 +253,10 @@ class AuthProvider with ChangeNotifier {
           score: data['new_score'],
           niveau: data['new_level'],
         );
-        
+
         // Update stored user data
         await _authService.storeUserData(_user!.toJson());
-        
+
         _setLoading(false);
         return true;
       } else {
@@ -275,7 +274,7 @@ class AuthProvider with ChangeNotifier {
   // Refresh user stats from server
   Future<bool> refreshUserStats() async {
     if (_user == null) return false;
-    
+
     try {
       final result = await _scoreService.getUserStats(_user!.uid);
 
@@ -285,10 +284,10 @@ class AuthProvider with ChangeNotifier {
           score: data['score'],
           niveau: data['level'],
         );
-        
+
         // Update stored user data
         await _authService.storeUserData(_user!.toJson());
-        
+
         notifyListeners();
         return true;
       }
@@ -301,7 +300,7 @@ class AuthProvider with ChangeNotifier {
   // Use a life for quiz gameplay
   Future<bool> useLife() async {
     if (_user == null || _user!.vies <= 0) return false;
-    
+
     _setLoading(true);
     _clearError();
 
@@ -314,10 +313,10 @@ class AuthProvider with ChangeNotifier {
         _user = _user!.copyWith(
           vies: data['remaining_lives'],
         );
-        
+
         // Update stored user data
         await _authService.storeUserData(_user!.toJson());
-        
+
         _setLoading(false);
         return true;
       } else {
@@ -335,7 +334,7 @@ class AuthProvider with ChangeNotifier {
   // Refresh lives from server
   Future<bool> refreshLives() async {
     if (_user == null) return false;
-    
+
     try {
       final result = await _lifeService.refreshLives(_user!.uid);
 
@@ -345,10 +344,10 @@ class AuthProvider with ChangeNotifier {
           vies: data['current_lives'],
           lastLifeRefresh: DateTime.now(),
         );
-        
+
         // Update stored user data
         await _authService.storeUserData(_user!.toJson());
-        
+
         notifyListeners();
         return true;
       }
@@ -361,7 +360,7 @@ class AuthProvider with ChangeNotifier {
   // Get life status from server
   Future<Map<String, dynamic>?> getLifeStatus() async {
     if (_user == null) return null;
-    
+
     try {
       final result = await _lifeService.getLifeStatus(_user!.uid);
 
@@ -370,10 +369,10 @@ class AuthProvider with ChangeNotifier {
         _user = _user!.copyWith(
           vies: data['current_lives'],
         );
-        
+
         // Update stored user data
         await _authService.storeUserData(_user!.toJson());
-        
+
         notifyListeners();
         return data;
       }

@@ -26,42 +26,13 @@ class QuizResultScreen extends StatefulWidget {
   State<QuizResultScreen> createState() => _QuizResultScreenState();
 }
 
-class _QuizResultScreenState extends State<QuizResultScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _scaleController;
-  late AnimationController _slideController;
-
+class _QuizResultScreenState extends State<QuizResultScreen> {
   @override
   void initState() {
     super.initState();
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateUserStats();
-      _startAnimations();
-    });
-  }
-
-  @override
-  void dispose() {
-    _scaleController.dispose();
-    _slideController.dispose();
-    super.dispose();
-  }
-
-  void _startAnimations() {
-    _scaleController.forward();
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) {
-        _slideController.forward();
-      }
     });
   }
 
@@ -111,264 +82,233 @@ class _QuizResultScreenState extends State<QuizResultScreen>
     final percentage = widget.quizResults['percentage'] ?? 0;
     final grade = widget.quizResults['grade'] ?? 'F';
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: percentage >= 50
-                ? [
-                    const Color(0xFF27AE60),
-                    const Color(0xFF2ECC71),
-                  ]
-                : [
-                    const Color(0xFFE74C3C),
-                    const Color(0xFFC0392B),
-                  ],
+    return WillPopScope(
+      onWillPop: () async {
+        // Rediriger vers la page d'accueil
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+        return false; // Empêcher le comportement par défaut
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: percentage >= 50
+                  ? [
+                      const Color(0xFF27AE60),
+                      const Color(0xFF2ECC71),
+                    ]
+                  : [
+                      const Color(0xFFE74C3C),
+                      const Color(0xFFC0392B),
+                    ],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Header avec icône de résultat
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: percentage >= 50
-                        ? const Color(0xFF27AE60)
-                        : const Color(0xFFE74C3C),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: (percentage >= 50
-                                ? const Color(0xFF27AE60)
-                                : const Color(0xFFE74C3C))
-                            .withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Header avec icône de résultat
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: percentage >= 50
+                          ? const Color(0xFF27AE60)
+                          : const Color(0xFFE74C3C),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (percentage >= 50
+                                  ? const Color(0xFF27AE60)
+                                  : const Color(0xFFE74C3C))
+                              .withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      percentage >= 50
+                          ? Icons.check_rounded
+                          : Icons.close_rounded,
+                      size: 40,
+                      color: Colors.white,
+                    ),
                   ),
-                  child: Icon(
+                  const SizedBox(height: 16),
+
+                  // Titre principal
+                  Text(
+                    percentage >= 50 ? 'Félicitations !' : 'Dommage !',
+                    style: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Sous-titre
+                  Text(
                     percentage >= 50
-                        ? Icons.check_rounded
-                        : Icons.close_rounded,
-                    size: 40,
-                    color: Colors.white,
+                        ? 'Vous avez réussi le niveau ${widget.level.title} !'
+                        : 'Continuez à vous entraîner !',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
-                // Titre principal
-                Text(
-                  percentage >= 50 ? 'Félicitations !' : 'Dommage !',
-                  style: GoogleFonts.poppins(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Sous-titre
-                Text(
-                  percentage >= 50
-                      ? 'Vous avez réussi le niveau ${widget.level.title} !'
-                      : 'Continuez à vous entraîner !',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-
-                // Carte de note principale
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      // Grade badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: _getGradeColor(grade),
-                          borderRadius: BorderRadius.circular(12),
+                  // Carte de note principale
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                        child: Text(
-                          grade,
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Score principal
-                      Text(
-                        '$percentage%',
-                        style: GoogleFonts.poppins(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF2C3E50),
-                        ),
-                      ),
-                      Text(
-                        'de réussite',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: const Color(0xFF7F8C8D),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Grille de statistiques
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Détails',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF2C3E50),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _ResultStat(
-                              icon: Icons.quiz_outlined,
-                              label: 'Questions',
-                              value: '$correctAnswers/$totalQuestions',
-                              color: const Color(0xFF3498DB),
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: _ResultStat(
-                              icon: Icons.star_outline,
-                              label: 'Score',
-                              value: '$score pts',
-                              color: const Color(0xFFF39C12),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Boutons d'action
-                Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => const HomeScreen(),
-                            ),
-                            (route) => false,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF27AE60),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        // Grade badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _getGradeColor(grade),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          elevation: 2,
+                          child: Text(
+                            grade,
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        const SizedBox(height: 16),
+
+                        // Score principal
+                        Text(
+                          '$percentage%',
+                          style: GoogleFonts.poppins(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF2C3E50),
+                          ),
+                        ),
+                        Text(
+                          'de réussite',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: const Color(0xFF7F8C8D),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Grille de statistiques
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Détails',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF2C3E50),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
                           children: [
-                            const Icon(Icons.home_outlined),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Retour à l\'accueil',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                            Expanded(
+                              child: _ResultStat(
+                                icon: Icons.quiz_outlined,
+                                label: 'Questions',
+                                value: '$correctAnswers/$totalQuestions',
+                                color: const Color(0xFF3498DB),
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: _ResultStat(
+                                icon: Icons.star_outline,
+                                label: 'Score',
+                                value: '$score pts',
+                                color: const Color(0xFFF39C12),
                               ),
                             ),
                           ],
                         ),
-                      ),
+                      ],
                     ),
-                    if (percentage < 50) ...[
-                      const SizedBox(height: 12),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Boutons d'action
+                  Column(
+                    children: [
                       SizedBox(
                         width: double.infinity,
                         height: 50,
-                        child: OutlinedButton(
+                        child: ElevatedButton(
                           onPressed: () {
-                            // Recommencer la partie avec les mêmes questions
-                            Navigator.of(context).pushReplacement(
+                            Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
-                                builder: (context) => QuizScreen(
-                                  level: widget.level,
-                                  questions: widget.questions,
-                                ),
+                                builder: (context) => const HomeScreen(),
                               ),
+                              (route) => false,
                             );
                           },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFE74C3C),
-                            side: const BorderSide(color: Color(0xFFE74C3C)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF27AE60),
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
+                            elevation: 2,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.refresh_outlined),
+                              const Icon(Icons.home_outlined),
                               const SizedBox(width: 8),
                               Text(
-                                'Réessayer',
+                                'Retour à l\'accueil',
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -378,11 +318,52 @@ class _QuizResultScreenState extends State<QuizResultScreen>
                           ),
                         ),
                       ),
+                      if (percentage < 50) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              // Recommencer la partie avec les mêmes questions
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (context) => QuizScreen(
+                                    level: widget.level,
+                                    questions: widget.questions,
+                                  ),
+                                ),
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFE74C3C),
+                              side: const BorderSide(color: Color(0xFFE74C3C)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.refresh_outlined),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Réessayer',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-                const SizedBox(height: 20),
-              ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),

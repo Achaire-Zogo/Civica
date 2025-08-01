@@ -268,6 +268,14 @@ const UsersPage: React.FC = () => {
           >
             Actualiser
           </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={handleAdd}
+            color="primary"
+          >
+            Ajouter un utilisateur
+          </Button>
         </Box>
 
         <Paper>

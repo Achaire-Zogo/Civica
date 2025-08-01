@@ -385,6 +385,14 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
                             "message":"successful login",
                             "data":{
                                 "token": custom_token,
+                                "id": db_user.to_dict().get("id"),
+                                "email": db_user.to_dict().get("email"),
+                                "spseudo": db_user.to_dict().get("spseudo"),
+                                "point": db_user.to_dict().get("point"),
+                                "niveaux": db_user.to_dict().get("niveaux"),
+                                "role": db_user.to_dict().get("role"),
+                                "is_verified": db_user.to_dict().get("is_verified"),
+                                "vies": db_user.to_dict().get("vies")
                             }
                         }
                     )

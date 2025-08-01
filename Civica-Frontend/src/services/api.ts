@@ -1,7 +1,7 @@
 // Import types from shared types file
 import type { Question, User } from '../types';
 
-const API_BASE_URL = 'http://192.168.1.143:5002/api';
+const API_BASE_URL = 'http://192.168.185.19:5002/api';
 
 interface ApiResponse<T> {
   success: boolean;

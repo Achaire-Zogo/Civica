@@ -1,5 +1,5 @@
 class Url {
-  static const String baseUrl = 'http://192.168.1.143:5002';
+  static const String baseUrl = 'http://192.168.185.19:5002';
 
   // Authentication endpoints
   static const String login = "$baseUrl/api/user/login";
